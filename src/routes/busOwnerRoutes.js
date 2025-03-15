@@ -1,8 +1,12 @@
 const express = require('express');
-const { getDashboard } = require('../controllers/busOwnerController');
 const router = express.Router();
 
-// Route to display bus owner dashboard
+const { getDashboard, deleteBus, deleteDestination, deleteDriver } = require('../controllers/busOwnerController');
+
 router.get('/dashboard', getDashboard);
+router.delete('/buses/:id', deleteBus);
+router.delete('/destinations/:id', deleteDestination);
+router.delete('/drivers/:id', deleteDriver);
+
 
 module.exports = router;

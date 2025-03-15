@@ -8,10 +8,13 @@ const PORT = process.env.PORT || 5000;
 
 // Set EJS as the template engine
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'src/views')); // Set views directory
+app.set('views', path.join(__dirname, './src/views')); // Set views directory
+app.get('/', (req, res) => {
+  res.render('index');
+});
+app.use(express.static(path.join(__dirname, 'frontend')));
 
-// Serve static assets (CSS, JS, images)
-app.use(express.static(path.join(__dirname, 'frontend/public')));
+
 
 // Use the bus owner routes
 app.use("/owner", busOwnerRoutes); // Access the dashboard at /owner/dashboard

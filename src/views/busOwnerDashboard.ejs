@@ -72,6 +72,17 @@
       object-fit: contain;
       border-radius: 50%;
     }
+    .sidebar-header .header-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Adjust the gap between icon and text */
+}
+
+.sidebar-header h1 {
+  font-size: 2rem; /* Smaller size for ClassRide */
+  color: white;
+  margin: 0;
+}
 
     .sidebar-header .sidebar-toggler,
     .sidebar-menu-button {
@@ -136,6 +147,20 @@
     .sidebar-menu-button {
       display: none;
     }
+/* Hide ClassRide header when sidebar is collapsed */
+.sidebar.collapsed .sidebar-header h1 {
+  display: none;
+}
+.sidebar-header a {
+  color: white; /* Ensure the link has the desired color */
+  text-decoration: none; /* Remove underline */
+}
+
+.sidebar-header h1 {
+  font-size: 1.8rem;
+  color: white;
+  margin: 0;
+}
 
     /* Hide nav labels (link names) when the sidebar is collapsed */
     .sidebar.collapsed .nav-label {
@@ -232,7 +257,7 @@
             background: white;
             padding: 15px;
             border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 8px #121435;
             flex: 1;
             min-width: 150px;
             text-align: center;
@@ -290,7 +315,7 @@
   background: white;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px #121435;
 }
 
 .box-header {
@@ -459,6 +484,21 @@
       .action-btn:hover {
         background-color: #45a049;
       }
+
+      .remove-button {
+  background-color: #f44336;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.remove-button:hover {
+  background-color: #d32f2f;
+}
+
   </style>
   </head>
   <body>
@@ -471,7 +511,9 @@
           <header class="sidebar-header">
             <a href="#" class="header-logo">
               <i class="fas fa-bus white-icon"></i>
+              <h1 class="text-secondary display-6">ClassRide</h1>
             </a>
+            
             <button class="sidebar-toggler">
               <span class="material-symbols-rounded">chevron_left</span>
             </button>
@@ -544,7 +586,9 @@
     </div>
       <ul>
           <% buses.forEach(function(bus) { %>
-              <li><%= bus.bus_name %></li>
+              <li><%= bus.bus_name %>              <button class="remove-button" onclick="removeBus('<%= bus.id %>')">Remove</button>
+</li>
+
           <% }) %>
       </ul>
      
@@ -557,7 +601,9 @@
     </div>
       <ul>
           <% destinations.forEach(function(destination) { %>
-              <li><%= destination.name %></li> <!-- Assuming a 'name' field in destinations -->
+              <li><%= destination.name %>
+                <button class="remove-button" onclick="removeDestination('<%= destination.id %>')">Remove</button>
+              </li> <!-- Assuming a 'name' field in destinations -->
           <% }) %>
       </ul>
       
@@ -572,7 +618,9 @@
       <ul>
           <% if (drivers && drivers.length > 0) { %>
               <% drivers.forEach(driver => { %>
-                  <li><%= driver.full_name %> - <%= driver.location %></li>
+                  <li><%= driver.full_name %> - <%= driver.location %>
+                    <button class="remove-button" onclick="removeDriver('<%= driver.id %>')">Remove</button>
+                  </li>
               <% }) %>
           <% } else { %>
               <li>No drivers available.</li>
@@ -694,7 +742,8 @@
         </div>
     
         <script>
-        // Sidebar toggler
+
+// Sidebar toggler
 document.querySelector('.sidebar-toggler').addEventListener('click', function() {
   const sidebar = document.querySelector('.sidebar');
   const mainContent = document.querySelector('.main-content');
@@ -708,58 +757,93 @@ document.querySelector('.sidebar-menu-button').addEventListener('click', functio
   sidebar.classList.toggle('collapsed');
 });
 
-        
-          // View Join Requests Button functionality
-          document.getElementById('viewRequestsButton').addEventListener('click', function() {
-            document.getElementById('joinRequestsModal').style.display = 'flex';
-          });
-        
-         // Function to close modal
-  function closeModal(modalId) {
-    document.getElementById(modalId).style.display = 'none';
-  }
+// View Join Requests Button functionality
+document.getElementById('viewRequestsButton').addEventListener('click', function() {
+  document.getElementById('joinRequestsModal').style.display = 'flex';
+});
 
-  // View Join Requests Button functionality
-  document.getElementById('viewRequestsButton').addEventListener('click', function() {
-    document.getElementById('joinRequestsModal').style.display = 'flex';
-  });
+// Function to close modal
+function closeModal(modalId) {
+  document.getElementById(modalId).style.display = 'none';
+}
 
-  // Accept and Reject button actions for Join Requests
-  document.querySelector('.action-btn').addEventListener('click', function() {
-    alert("Request Accepted");
-    closeModal('joinRequestsModal'); // Close the modal after accepting
-  });
+// Accept and Reject button actions for Join Requests
+document.querySelector('.action-btn').addEventListener('click', function() {
+  alert("Request Accepted");
+  closeModal('joinRequestsModal'); // Close the modal after accepting
+});
 
-  document.querySelector('.reject-btn').addEventListener('click', function() {
-    alert("Request Rejected");
-    closeModal('joinRequestsModal'); // Close the modal after rejecting
-  });
-        
-          // Open modal for adding a Bus
-          document.querySelector('.add-button.add-bus').addEventListener('click', function() {
-            document.getElementById('addBusModal').style.display = 'flex';
-          });
-        
-          // Open modal for adding a Destination
-          document.querySelector('.add-button.add-destination').addEventListener('click', function() {
-            document.getElementById('addDestinationModal').style.display = 'flex';
-          });
-        
-          // Submit form for adding a Bus
-          document.getElementById('addBusForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('Bus Added!');
-            closeModal('addBusModal');
-          });
-        
-          // Submit form for adding a Destination
-          document.getElementById('addDestinationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            alert('Destination Added!');
-            closeModal('addDestinationModal');
-          });
-        </script>
-        
+document.querySelector('.reject-btn').addEventListener('click', function() {
+  alert("Request Rejected");
+  closeModal('joinRequestsModal'); // Close the modal after rejecting
+});
+
+// Open modal for adding a Bus
+document.querySelector('.add-button.add-bus').addEventListener('click', function() {
+  document.getElementById('addBusModal').style.display = 'flex';
+});
+
+// Open modal for adding a Destination
+document.querySelector('.add-button.add-destination').addEventListener('click', function() {
+  document.getElementById('addDestinationModal').style.display = 'flex';
+});
+
+// Submit form for adding a Bus
+document.getElementById('addBusForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  alert('Bus Added!');
+  closeModal('addBusModal');
+});
+
+// Submit form for adding a Destination
+document.getElementById('addDestinationForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  alert('Destination Added!');
+  closeModal('addDestinationModal');
+});
+
+
+function removeBus(busId) {
+    console.log("Removing Bus ID:", busId);
+    fetch(`/buses/${busId}`, {
+        method: 'DELETE'
+    }).then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            console.error("Failed to remove bus");
+        }
+    }).catch(error => console.error("Error:", error));
+}
+
+function removeDriver(driverId) {
+    console.log("Removing Driver ID:", driverId);
+    fetch(`/drivers/${driverId}`, {
+        method: 'DELETE'
+    }).then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            console.error("Failed to remove driver");
+        }
+    }).catch(error => console.error("Error:", error));
+}
+
+function removeDestination(destinationId) {
+    console.log("Removing Destination ID:", destinationId);
+    fetch(`/destinations/${destinationId}`, {
+        method: 'DELETE'
+    }).then(response => {
+        if (response.ok) {
+            location.reload();
+        } else {
+            console.error("Failed to remove destination");
+        }
+    }).catch(error => console.error("Error:", error));
+}
+
+
+</script>
       </body>
     </html>
     
