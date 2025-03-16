@@ -1,0 +1,22 @@
+<!-- Modal for adding a Destination -->
+<div id="addDestinationModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeModal('addDestinationModal')">&times;</span>
+      <h3>Add New Destination</h3>
+      <form id="addDestinationForm">
+        <label for="destinationId">Destination ID:</label>
+        <input type="text" id="destinationId" name="destinationId" required />
+  
+        <label for="ownerPhone">Owner Phone:</label>
+        <input type="text" id="ownerPhone" name="ownerPhone" required />
+  
+        <label for="destinationName">Destination Name:</label>
+        <input type="text" id="destinationName" name="destinationName" required />
+  
+        <label for="location">Location:</label>
+        <input type="text" id="location" name="location" required />
+  
+        <button type="submit" class="submit-button">Add Destination</button>
+      </form>
+    </div>
+  </div>

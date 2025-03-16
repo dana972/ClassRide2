@@ -502,7 +502,6 @@
   </style>
   </head>
   <body>
-    
         <button class="sidebar-menu-button">
           <span class="material-symbols-rounded">menu</span>
         </button>
@@ -568,6 +567,8 @@
         </aside>
     
         <div class="main-content">
+          <div id="dashboard" class="content-section" style="display:none;">
+
           <h1>Hello, <%= ownerName %>!</h1>
           
 <div class="top-boxes">
@@ -635,221 +636,28 @@
   </div>
   
 </div>
+          </div>
 
        
    
-<!-- Modal for adding a Bus -->
-<div id="addBusModal" class="modal" style="display: none;">
-  <div class="modal-content">
-    <span class="close-modal" onclick="closeModal('addBusModal')">&times;</span>
-    <h3>Add New Bus</h3>
-    <form id="addBusForm">
-      <label for="busId">Bus ID:</label>
-      <input type="text" id="busId" name="busId" required />
-
-      <label for="ownerPhone">Owner Phone:</label>
-      <input type="text" id="ownerPhone" name="ownerPhone" required />
-
-      <label for="busName">Bus Name:</label>
-      <input type="text" id="busName" name="busName" required />
-
-      <label for="capacity">Capacity:</label>
-      <input type="number" id="capacity" name="capacity" required />
-
-      <button type="submit" class="submit-button">Add Bus</button>
-    </form>
-  </div>
-</div>
-<!-- Modal for adding a Destination -->
-<div id="addDestinationModal" class="modal" style="display: none;">
-  <div class="modal-content">
-    <span class="close-modal" onclick="closeModal('addDestinationModal')">&times;</span>
-    <h3>Add New Destination</h3>
-    <form id="addDestinationForm">
-      <label for="destinationId">Destination ID:</label>
-      <input type="text" id="destinationId" name="destinationId" required />
-
-      <label for="ownerPhone">Owner Phone:</label>
-      <input type="text" id="ownerPhone" name="ownerPhone" required />
-
-      <label for="destinationName">Destination Name:</label>
-      <input type="text" id="destinationName" name="destinationName" required />
-
-      <label for="location">Location:</label>
-      <input type="text" id="location" name="location" required />
-
-      <button type="submit" class="submit-button">Add Destination</button>
-    </form>
-  </div>
-</div>
 
 
 
-
-<!-- Join Requests Modal -->
-<div id="joinRequestsModal" class="modal">
-  <div class="modal-content">
-    <span class="close-modal" onclick="closeModal('joinRequestsModal')">&times;</span>
-    <h3>Join Requests</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Location</th>
-          <th>Phone Number</th>
-          <th>Destination</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Assuming you have joinRequests data -->
-        <tr>
-          <td>
-            <button class="action-btn">Accept</button>
-            <button class="action-btn reject-btn">Reject</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-   
-
-          <div id="manage-trips" class="content-section" style="display:none;">
-            <!-- Manage Trips for Tomorrow Content -->
-            <h3>Manage Trips for Tomorrow</h3>
-            <!-- Your content here -->
-          </div>
-    
-          <div id="trips-history" class="content-section" style="display:none;">
-            <!-- Trips History Content -->
-            <h3>Trips History</h3>
-            <!-- Your content here -->
-          </div>
-    
-          <div id="notifications" class="content-section" style="display:none;">
-            <!-- Notifications Content -->
-            <h3>Notifications</h3>
-            <!-- Your content here -->
-          </div>
-    
-          <div id="chats" class="content-section" style="display:none;">
-            <!-- Chats Content -->
-            <h3>Chats</h3>
-            <!-- Your content here -->
-          </div>
-    
-          <div id="logout" class="content-section" style="display:none;">
-            <!-- Logout Content -->
-            <h3>Logout</h3>
-            <!-- Your content here -->
-          </div>
-        </div>
-    
-        <script>
-
-// Sidebar toggler
-document.querySelector('.sidebar-toggler').addEventListener('click', function() {
-  const sidebar = document.querySelector('.sidebar');
-  const mainContent = document.querySelector('.main-content');
-  sidebar.classList.toggle('collapsed');
-  mainContent.classList.toggle('collapsed');
-});
-
-// For the small screen sidebar menu button toggling
-document.querySelector('.sidebar-menu-button').addEventListener('click', function() {
-  const sidebar = document.querySelector('.sidebar');
-  sidebar.classList.toggle('collapsed');
-});
-
-// View Join Requests Button functionality
-document.getElementById('viewRequestsButton').addEventListener('click', function() {
-  document.getElementById('joinRequestsModal').style.display = 'flex';
-});
-
-// Function to close modal
-function closeModal(modalId) {
-  document.getElementById(modalId).style.display = 'none';
-}
-
-// Accept and Reject button actions for Join Requests
-document.querySelector('.action-btn').addEventListener('click', function() {
-  alert("Request Accepted");
-  closeModal('joinRequestsModal'); // Close the modal after accepting
-});
-
-document.querySelector('.reject-btn').addEventListener('click', function() {
-  alert("Request Rejected");
-  closeModal('joinRequestsModal'); // Close the modal after rejecting
-});
-
-// Open modal for adding a Bus
-document.querySelector('.add-button.add-bus').addEventListener('click', function() {
-  document.getElementById('addBusModal').style.display = 'flex';
-});
-
-// Open modal for adding a Destination
-document.querySelector('.add-button.add-destination').addEventListener('click', function() {
-  document.getElementById('addDestinationModal').style.display = 'flex';
-});
-
-// Submit form for adding a Bus
-document.getElementById('addBusForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  alert('Bus Added!');
-  closeModal('addBusModal');
-});
-
-// Submit form for adding a Destination
-document.getElementById('addDestinationForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  alert('Destination Added!');
-  closeModal('addDestinationModal');
-});
+<%- include('./partials/requestModal') %>
+<%- include('./partials/addDestinationModal') %>
+<%- include('./partials/addBusModal') %>
+<%- include('./partials/manageTrips') %>
+<%- include('./partials/tripsHistory') %>
+<%- include('./partials/notifications') %>
+<%- include('./partials/chats') %>
+<%- include('./partials/logout') %>
 
 
-function removeBus(busId) {
-    console.log("Removing Bus ID:", busId);
-    fetch(`/buses/${busId}`, {
-        method: 'DELETE'
-    }).then(response => {
-        if (response.ok) {
-            location.reload();
-        } else {
-            console.error("Failed to remove bus");
-        }
-    }).catch(error => console.error("Error:", error));
-}
 
-function removeDriver(driverId) {
-    console.log("Removing Driver ID:", driverId);
-    fetch(`/drivers/${driverId}`, {
-        method: 'DELETE'
-    }).then(response => {
-        if (response.ok) {
-            location.reload();
-        } else {
-            console.error("Failed to remove driver");
-        }
-    }).catch(error => console.error("Error:", error));
-}
+<script src="/assets/js/sidebar.js"></script>
 
-function removeDestination(destinationId) {
-    console.log("Removing Destination ID:", destinationId);
-    fetch(`/destinations/${destinationId}`, {
-        method: 'DELETE'
-    }).then(response => {
-        if (response.ok) {
-            location.reload();
-        } else {
-            console.error("Failed to remove destination");
-        }
-    }).catch(error => console.error("Error:", error));
-}
+<script src="/assets/js/modals.js"></script>
 
-
-</script>
       </body>
     </html>
     

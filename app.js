@@ -1,3 +1,4 @@
+// app.js
 const express = require("express");
 const path = require("path");
 const busOwnerRoutes = require("./src/routes/busOwnerRoutes");
@@ -16,12 +17,13 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "frontend")));
 
 app.get("/", (req, res) => {
-    res.render("index");
+  res.render("index");
 });
 
-app.use("/owner", busOwnerRoutes);
-app.use("/api", authRoutes); // Use authentication routes
+// Use the routes
+app.use("/owner", busOwnerRoutes); // For bus owner operations
+app.use("/api", authRoutes); // For authentication
 
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
