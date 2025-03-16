@@ -18,8 +18,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const data = await response.json();
         alert(data.message);
         if (response.ok) {
+            // Save the token to local storage
             localStorage.setItem("token", data.token);
-            location.reload();
+
+            // Hide the signup form and show the login form
+            document.querySelector(".auth-sign-up").style.display = "none"; // Hide signup
+            document.querySelector(".auth-sign-in").style.display = "block"; // Show login
+            document.getElementById("login").click(); // Activate the login toggle button
         }
     });
 
@@ -51,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Failed to log in.");
         }
     });
-    
+
     // Example function to access protected routes
     async function accessProtectedRoute() {
         const token = localStorage.getItem("token");
