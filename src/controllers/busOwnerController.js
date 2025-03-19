@@ -1,57 +1,52 @@
-const client = require('../config/db'); // Import the database client 
+const client = require('../config/db'); // Import the database client
 
 const getDashboard = async (req, res) => {
     try {
-        const ownerPhone = '1234567890';  // For now, use a static value for ownerPhone
+        const ownerPhone = req.user.phone_number;  // Use logged-in user's phone
 
-        // Fetch the owner's name using owner_phone (from the 'users' table)
+        console.log("Fetching dashboard for:", ownerPhone);
+
         const ownerResult = await client.query('SELECT * FROM users WHERE phone_number = $1', [ownerPhone]);
 
         if (ownerResult.rows.length === 0) {
-            console.log("Owner not found");
+            console.log("Owner not found in database");
             return res.status(404).send("Owner not found");
         }
 
-        // Get the owner's full_name
-        const ownerName = ownerResult.rows[0].full_name;  // Get the owner's full name
+        const ownerName = ownerResult.rows[0].full_name;
 
-        // Log the name for debugging
-        console.log("Owner Name: ", ownerName);
-
-        // Fetch buses and drivers associated with the owner
+        // Fetch data related to the owner
         const busesResult = await client.query('SELECT * FROM buses WHERE owner_phone = $1', [ownerPhone]);
         const driversResult = await client.query(`
             SELECT drivers.phone_number, users.full_name, drivers.location
             FROM drivers
             JOIN users ON drivers.phone_number = users.phone_number
             WHERE drivers.owner_phone = $1`, [ownerPhone]);
-        
-        // Count the number of students associated with the owner
+
         const studentsResult = await client.query('SELECT COUNT(*) FROM students WHERE owner_phone = $1', [ownerPhone]);
-        const studentsCount = studentsResult.rows[0].count;
 
-        // Fetch the count of join requests (assuming there is a students_join_requests table)
-        const joinRequestsResult = await client.query('SELECT COUNT(*) FROM students_join_requests');
-        const joinRequestsCount = joinRequestsResult.rows[0].count;
+        // Modify to fetch join requests specific to the owner
+        const joinRequestsResult = await client.query('SELECT COUNT(*) FROM students_join_requests WHERE owner_phone = $1', [ownerPhone]);
 
-        // Fetch the destinations (assuming a "destinations" table)
-        const destinationsResult = await client.query('SELECT * FROM destinations');
-        const destinations = destinationsResult.rows;
+        // Modify to fetch destinations specific to the owner
+        const destinationsResult = await client.query('SELECT * FROM destinations WHERE owner_phone = $1', [ownerPhone]);
 
-        // Render the dashboard with the owner's name, buses, drivers, and other data
         res.render('busOwnerDashboard', { 
-            ownerName: ownerName, 
+            ownerName, 
             buses: busesResult.rows,
             drivers: driversResult.rows,
-            studentsCount: studentsCount,
-            joinRequestsCount: joinRequestsCount,
-            destinations: destinations
+            studentsCount: studentsResult.rows[0].count,
+            joinRequestsCount: joinRequestsResult.rows[0].count,
+            destinations: destinationsResult.rows
         });
+
     } catch (err) {
-        console.error("Error fetching dashboard data", err.stack);
+        console.error("Error fetching dashboard data:", err);
         res.status(500).send("Error loading dashboard");
     }
 };
+
+
 const deleteBus = async (req, res) => {
     try {
         const { id } = req.params;

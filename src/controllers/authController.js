@@ -8,7 +8,7 @@ const generateToken = (user) => {
     return jwt.sign(
         { phone_number: user.phone_number, role: user.role },
         process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN }
+        { expiresIn: '1h' }
     );
 };
 
@@ -26,7 +26,15 @@ exports.signup = async (req, res) => {
 
         const token = generateToken(result.rows[0]);
 
-        res.status(201).json({ message: "Signup successful", token, user: result.rows[0] });
+        // Set HttpOnly cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: false, // true if using HTTPS
+            sameSite: 'Strict',
+            maxAge: 3600000 // 1 hour
+        });
+
+        res.status(201).json({ message: "Signup successful", user: result.rows[0] });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error signing up" });
@@ -45,7 +53,6 @@ exports.login = async (req, res) => {
         }
 
         const user = result.rows[0];
-
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
             return res.status(400).json({ message: "Invalid credentials" });
@@ -53,16 +60,30 @@ exports.login = async (req, res) => {
 
         const token = generateToken(user);
 
-        res.json({ message: "Login successful", token, role: user.role });
+        // Set HttpOnly cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'Strict',
+            maxAge: 3600000
+        });
+
+        res.json({ message: "Login successful", role: user.role });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error logging in" });
     }
 };
 
-// Middleware to verify JWT token
+// Logout Controller - Clears the cookie
+exports.logout = (req, res) => {
+    res.clearCookie('token');
+    res.json({ message: "Logged out successfully" });
+};
+
+// Middleware to verify token from cookies
 exports.verifyToken = (req, res, next) => {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = req.cookies.token;
 
     if (!token) {
         return res.status(401).json({ message: "Unauthorized: No token provided" });
@@ -74,6 +95,24 @@ exports.verifyToken = (req, res, next) => {
         next();
     } catch (error) {
         return res.status(403).json({ message: "Forbidden: Invalid token" });
+    }
+};
+exports.checkAuth = (req, res) => {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ error: "Not authenticated" });
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // If the user's role is NOT "owner", return status pending
+        if (decoded.role !== "owner") {
+            return res.json({ status: "pending", message: "Your role is still pending." });
+        }
+
+        // If role is "owner", return authenticated status
+        res.json({ status: "authenticated", user: decoded });
+    } catch (err) {
+        res.status(401).json({ error: "Invalid token" });
     }
 };
 

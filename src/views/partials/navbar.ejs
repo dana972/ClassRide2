@@ -14,6 +14,7 @@
                 <a href="/" class="nav-item nav-link active">Home</a>
                 <a href="/about" class="nav-item nav-link">About Us</a>
                 <a href="/contact" class="nav-item nav-link">Contact Us</a>
+                
                 <a href="#" class="btn btn-secondary py-2 px-4 ms-3" data-bs-toggle="modal" data-bs-target="#loginSignupModal" id="login-btn">
                     Login <i class="fas fa-user text-white me-2"></i>
                 </a>
@@ -24,42 +25,116 @@
 
 <!-- Include the Login Modal -->
 <%- include('./loginModal') %>
-
-<!-- Script to update navbar based on login status -->
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const token = localStorage.getItem("token");
-    const navbarLinks = document.getElementById("navbar-links");
-
-    if (token) {
-        // Create the Dashboard link if it doesn't already exist
-        if (!document.getElementById("dashboard-link")) {
+    document.addEventListener("DOMContentLoaded", function () {
+      const navbarLinks = document.getElementById("navbar-links");
+  
+      // Check if user is authenticated by hitting /api/check-auth
+      fetch("/api/check-auth", { credentials: "include" })
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          }
+          throw new Error("Not authenticated");
+        })
+        .then(data => {
+          // Remove Login Button
+          const loginBtn = document.getElementById("login-btn");
+          if (loginBtn) loginBtn.remove();
+  
+          // Add Dashboard Link if not already added
+          if (!document.getElementById("dashboard-link")) {
             const dashboardLink = document.createElement("a");
             dashboardLink.href = "/owner/dashboard";
             dashboardLink.className = "nav-item nav-link";
             dashboardLink.id = "dashboard-link";
             dashboardLink.textContent = "Dashboard";
             navbarLinks.appendChild(dashboardLink);
-        }
-
-        // Remove the Login button if it exists
-        const loginBtn = document.getElementById("login-btn");
-        if (loginBtn) {
-            loginBtn.remove();
-        }
-
-        // Create a Signout button if it doesn't already exist
-        if (!document.getElementById("signout-btn")) {
-            const signoutBtn = document.createElement("button");
-            signoutBtn.id = "signout-btn";
-            signoutBtn.className = "btn btn-danger py-2 px-4 ms-3";
-            signoutBtn.textContent = "Sign Out";
-            signoutBtn.addEventListener("click", function () {
-                localStorage.removeItem("token");
-                window.location.reload();
+          }
+  
+          // Add Logout Button
+          if (!document.getElementById("logout-btn")) {
+            const logoutBtn = document.createElement("button");
+            logoutBtn.id = "logout-btn";
+            logoutBtn.className = "btn btn-danger py-2 px-4 ms-3";
+            logoutBtn.textContent = "Logout";
+            logoutBtn.addEventListener("click", function () {
+              fetch("/api/logout", { method: "POST", credentials: "include" })
+                .then(() => {
+                  window.location.href = "/";
+                })
+                .catch(err => console.error(err));
             });
-            navbarLinks.appendChild(signoutBtn);
-        }
-    }
-});
-</script>
+            navbarLinks.appendChild(logoutBtn);
+          }
+        })
+        .catch(err => {
+          console.log("User not authenticated");
+        });
+    });
+  </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const navbarLinks = document.getElementById("navbar-links");
+  
+      fetch("/auth/check-auth")
+        .then((response) => response.json()) // Convert response to JSON
+        .then((data) => {
+          if (data.status === "authenticated" || data.status === "pending") {
+            // Show Dashboard link for all authenticated users (including pending ones)
+            if (!document.getElementById("dashboard-link")) {
+              const dashboardLink = document.createElement("a");
+              dashboardLink.href = "/owner/dashboard"; 
+              dashboardLink.className = "nav-item nav-link";
+              dashboardLink.id = "dashboard-link";
+              dashboardLink.textContent = "Dashboard";
+  
+              // Prevent access if role is pending
+              if (data.status === "pending") {
+                dashboardLink.addEventListener("click", function (event) {
+                  event.preventDefault(); // **STOP REDIRECTION**
+                  alert("Your role is still pending. You cannot access the dashboard yet.");
+                });
+  
+                // **Extra Safety: Disable Right-Click + Open in New Tab**
+                dashboardLink.onclick = function (event) {
+                  event.preventDefault(); 
+                  alert("Your role is still pending. You cannot access the dashboard yet.");
+                };
+                
+                dashboardLink.addEventListener("contextmenu", (event) => event.preventDefault());
+                dashboardLink.addEventListener("mousedown", (event) => {
+                  if (event.button === 1 || event.button === 2) {
+                    event.preventDefault(); // Stops middle click (new tab) and right-click
+                  }
+                });
+              }
+  
+              navbarLinks.appendChild(dashboardLink);
+            }
+  
+            // Remove Login button if exists
+            const loginBtn = document.getElementById("login-btn");
+            if (loginBtn) {
+              loginBtn.remove();
+            }
+  
+            // Add Sign Out button
+            if (!document.getElementById("signout-btn")) {
+              const signoutBtn = document.createElement("button");
+              signoutBtn.id = "signout-btn";
+              signoutBtn.className = "btn btn-danger py-2 px-4 ms-3";
+              signoutBtn.textContent = "Sign Out";
+              signoutBtn.addEventListener("click", function () {
+                fetch("/auth/logout", { method: "POST" })
+                  .then(() => window.location.href = "/");
+              });
+              navbarLinks.appendChild(signoutBtn);
+            }
+          }
+        })
+        .catch(() => {
+          console.log("User not authenticated");
+        });
+    });
+  </script>
