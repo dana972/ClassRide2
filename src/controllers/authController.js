@@ -12,16 +12,17 @@ const generateToken = (user) => {
     );
 };
 
-// Signup Controller
+// Signup Controller (Defaults new users to 'owner' role)
 exports.signup = async (req, res) => {
-    const { full_name, phone_number, password } = req.body;
+    const { full_name, phone_number, password, role } = req.body;
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
+        const userRole = role || 'owner'; // Default role is 'owner' if not provided
 
         const result = await client.query(
-            "INSERT INTO users (full_name, phone_number, password, role) VALUES ($1, $2, $3, 'owner') RETURNING *",
-            [full_name, phone_number, hashedPassword]
+            "INSERT INTO users (full_name, phone_number, password, role) VALUES ($1, $2, $3, $4) RETURNING *",
+            [full_name, phone_number, hashedPassword, userRole]
         );
 
         const token = generateToken(result.rows[0]);
@@ -29,7 +30,7 @@ exports.signup = async (req, res) => {
         // Set HttpOnly cookie
         res.cookie('token', token, {
             httpOnly: true,
-            secure: false, // true if using HTTPS
+            secure: false, // Change to 'true' if using HTTPS
             sameSite: 'Strict',
             maxAge: 3600000 // 1 hour
         });
@@ -75,9 +76,9 @@ exports.login = async (req, res) => {
     }
 };
 
-// Logout Controller - Clears the cookie
+// Logout Controller - Clears the token cookie
 exports.logout = (req, res) => {
-    res.clearCookie('token');
+    res.cookie("token", "", { expires: new Date(0), httpOnly: true });
     res.json({ message: "Logged out successfully" });
 };
 
@@ -97,22 +98,26 @@ exports.verifyToken = (req, res, next) => {
         return res.status(403).json({ message: "Forbidden: Invalid token" });
     }
 };
-exports.checkAuth = (req, res) => {
+
+// Check Authentication Status & Role
+exports.checkAuth = async (req, res) => {
     const token = req.cookies.token;
-    if (!token) return res.status(401).json({ error: "Not authenticated" });
+    if (!token) return res.status(401).json({ authenticated: false, message: "Not authenticated" });
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // If the user's role is NOT "owner", return status pending
-        if (decoded.role !== "owner") {
-            return res.json({ status: "pending", message: "Your role is still pending." });
+        
+        // Fetch user role from the database for extra security
+        const result = await client.query("SELECT role FROM users WHERE phone_number = $1", [decoded.phone_number]);
+        
+        if (result.rows.length === 0) {
+            return res.status(401).json({ authenticated: false, message: "User not found" });
         }
 
-        // If role is "owner", return authenticated status
-        res.json({ status: "authenticated", user: decoded });
+        const role = result.rows[0].role;
+        return res.json({ authenticated: true, role });
     } catch (err) {
-        res.status(401).json({ error: "Invalid token" });
+        res.status(401).json({ authenticated: false, message: "Invalid token" });
     }
 };
 
