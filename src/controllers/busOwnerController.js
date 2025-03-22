@@ -178,17 +178,23 @@ const addDestination = async (req, res) => {
   }
 };
 const createTrip = async (req, res) => {
-  const ownerPhone = req.user.phone_number;
-  const { bus_id, driver_phone, destination_id, pickup_time } = req.body;
+  const { bus_id, driver_phone, destination_id, pickup_time, dropoff_time, type } = req.body;
+
+  // Build schedule from pickup_time and tomorrow's date
+  const scheduleDate = new Date();
+  scheduleDate.setDate(scheduleDate.getDate() + 1);
+  const [hours, minutes] = pickup_time.split(':');
+  scheduleDate.setHours(hours, minutes, 0, 0);
+  const schedule = scheduleDate.toISOString();
 
   try {
     await client.query(
       `INSERT INTO trips (
-        bus_id, driver_phone, destination_id, pickup_time, date, type, status, schedule
+        bus_id, driver_phone, destination_id, pickup_time, dropoff_time, date, type, status, schedule
       ) VALUES (
-        $1, $2, $3, $4, CURRENT_DATE + INTERVAL '1 day', 'regular', 'scheduled', $5
+        $1, $2, $3, $4, $5, CURRENT_DATE + INTERVAL '1 day', $6, 'scheduled', $7
       )`,
-      [bus_id, driver_phone, destination_id, pickup_time, 'morning']
+      [bus_id, driver_phone, destination_id, pickup_time, dropoff_time, type, schedule]
     );
 
     res.status(201).json({ message: 'Trip created successfully' });
@@ -197,15 +203,145 @@ const createTrip = async (req, res) => {
     res.status(500).json({ error: 'Failed to create trip' });
   }
 };
+const getStudentsByDestination = async (req, res) => {
+  const ownerPhone = req.user.phone_number;
 
+  try {
+    const result = await client.query(`
+      SELECT 
+        s.phone_number,
+        s.location,
+        s.schedule,
+        s.attendance,
+        u.full_name,
+        d.destination_id,
+        d.name AS destination_name
+      FROM students s
+      JOIN users u ON s.phone_number = u.phone_number
+      JOIN destinations d ON s.destination_id = d.destination_id
+      WHERE s.owner_phone = $1
+      AND NOT EXISTS (
+        SELECT 1 FROM students_assignment sa
+        WHERE sa.student_phone = s.phone_number
+      )
+      ORDER BY d.name, u.full_name;
+    `, [ownerPhone]);
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Error fetching students by destination:", err);
+    res.status(500).json({ error: "Failed to fetch students" });
+  }
+};
+
+// ✅ Get all trips for current owner (for trip cards)
+const getAllTrips = async (req, res) => {
+  const ownerPhone = req.user.phone_number;
+
+  try {
+    const result = await client.query(`
+      SELECT 
+        t.trip_id, t.bus_id, t.driver_phone, t.destination_id,
+        t.pickup_time, t.dropoff_time, t.type, t.date, d.name AS destination_name
+      FROM trips t
+      JOIN destinations d ON t.destination_id = d.destination_id
+      WHERE d.owner_phone = $1
+      ORDER BY t.date DESC, t.pickup_time ASC
+    `, [ownerPhone]);
+
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Error fetching trips:", err);
+    res.status(500).json({ error: "Failed to fetch trips" });
+  }
+};
+
+// ✅ Get trip details by ID + list of assigned students
+const getTripDetails = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Fetch trip info with driver and destination details
+    const tripResult = await client.query(`
+      SELECT 
+        t.*,
+        d.name AS destination_name,
+        u.full_name AS driver_name
+      FROM trips t
+      JOIN destinations d ON t.destination_id = d.destination_id
+      JOIN users u ON t.driver_phone = u.phone_number
+      WHERE t.trip_id = $1
+    `, [id]);
+
+    if (tripResult.rows.length === 0) {
+      return res.status(404).json({ error: "Trip not found" });
+    }
+
+    const trip = tripResult.rows[0];
+
+    // Fetch assigned students from students_assignment
+    const studentsResult = await client.query(`
+      SELECT u.full_name, s.phone_number
+      FROM students_assignment sa
+      JOIN students s ON sa.student_phone = s.phone_number
+      JOIN users u ON s.phone_number = u.phone_number
+      WHERE sa.trip_id = $1
+    `, [id]);
+
+    res.status(200).json({
+      trip,
+      students: studentsResult.rows
+    });
+  } catch (err) {
+    console.error("Error fetching trip details:", err);
+    res.status(500).json({ error: "Failed to fetch trip details" });
+  }
+};
+
+const assignStudentToTrip = async (req, res) => {
+  const { student_phone, trip_id } = req.body;
+
+  try {
+    await client.query(
+      `INSERT INTO students_assignment (student_phone, trip_id) VALUES ($1, $2)`,
+      [student_phone, trip_id]
+    );
+
+    res.status(201).json({ message: 'Student assigned to trip successfully' });
+  } catch (err) {
+    console.error("Error assigning student to trip:", err);
+    res.status(500).json({ error: "Failed to assign student to trip" });
+  }
+};
+const unassignStudentFromTrip = async (req, res) => {
+  const { student_phone, trip_id } = req.body;
+
+  try {
+    await client.query(
+      'DELETE FROM students_assignment WHERE student_phone = $1 AND trip_id = $2',
+      [student_phone, trip_id]
+    );
+
+    res.status(200).json({ message: 'Student unassigned successfully' });
+  } catch (err) {
+    console.error("Error unassigning student from trip:", err);
+    res.status(500).json({ error: "Failed to unassign student" });
+  }
+};
 
 module.exports = {
   getDashboard,
   removeBus,
   removeDestination,
   removeDriver,
-  removeStudent,      // ✅ Exported
+  removeStudent,
   addBus,
   addDestination,
-  createTrip
+  createTrip,
+  getStudentsByDestination,
+  getAllTrips,  
+         // ✅ export added
+  getTripDetails ,
+  assignStudentToTrip  ,    // ✅ export added
+  unassignStudentFromTrip
 };
