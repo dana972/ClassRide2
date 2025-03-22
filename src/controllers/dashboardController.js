@@ -1,18 +1,27 @@
-const getDashboard = async (req, res) => {
-    // Check if the user has the 'pending' role
-    if (req.user.role === 'pending') {
-        // User is pending, so deny access
-        return res.status(403).json({ message: "Your account is pending approval. Please wait for the admin to approve your account." });
+const getDashboardrole = async (req, res) => {
+    const role = req.user.role;
+
+    // Role is still pending
+    if (role === 'pending') {
+        return res.render("pendingRole");
     }
 
-    // Check if the user has the 'owner' role
-    if (req.user.role === 'owner') {
-        // User is an owner, so show the dashboard
-        return res.json({ message: "Welcome to your dashboard", user: req.user });
-    }
+    // Render dashboard view based on role
+    switch (role) {
+        case 'owner':
+            return res.render("busOwnerDashboard", { user: req.user });
 
-    // User is not an owner or pending, so deny access
-    return res.status(403).json({ message: "Access denied. You are not authorized to view the dashboard." });
+        case 'student':
+            return res.render("studentDashboard", { user: req.user });
+
+        case 'driver':
+            return res.render("driverDashboard", { user: req.user });
+
+        default:
+            return res.status(403).render("unauthorized", {
+                message: "Access denied. You are not authorized to view the dashboard."
+            });
+    }
 };
 
-module.exports = { getDashboard };
+module.exports = { getDashboardrole };

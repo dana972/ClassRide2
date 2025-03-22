@@ -1,4 +1,4 @@
-<!-- Navbar HTML -->
+ <!-- Navbar HTML -->
 <div class="container-fluid sticky-top px-0">
   <nav class="navbar navbar-expand-lg navbar-dark py-3 px-4">
       <a href="/" class="navbar-brand p-0">
@@ -30,54 +30,53 @@
 <%- include('./loginModal') %>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const navbarLinks = document.getElementById("navbar-links");
-    const loginBtn = document.getElementById("login-btn");
-
-    fetch("/api/check-auth", { credentials: "include" })
-        .then(response => {
-            if (response.ok) {
-                return response.json();
-            }
-            throw new Error("Not authenticated");
-        })
-        .then(data => {
-            console.log("Auth success:", data);
-
-            // Remove Login Button if authenticated
-            if (loginBtn) loginBtn.remove();
-
-            // Add Dashboard link if role is owner, student, or driver
-            if (["owner", "student", "driver"].includes(data.role)) {
-    const dashboardLink = document.createElement("a");
-    dashboardLink.href = `/${data.role}/dashboard`;
-    dashboardLink.className = "nav-item nav-link";
-    dashboardLink.id = "dashboard-link";
-    dashboardLink.textContent = "Dashboard";
-    navbarLinks.appendChild(dashboardLink);
-}
-
-
-            // Add Logout Button
-            if (!document.getElementById("logout-btn")) {
-                const logoutBtn = document.createElement("button");
-                logoutBtn.id = "logout-btn";
-                logoutBtn.className = "btn btn-danger py-2 px-4 ms-3";
-                logoutBtn.textContent = "Logout";
-                logoutBtn.addEventListener("click", function () {
-                    fetch("/api/logout", { method: "POST", credentials: "include" })
-                        .then(() => {
-                            window.location.href = "/";
-                        })
-                        .catch(err => console.error(err));
-                });
-                navbarLinks.appendChild(logoutBtn);
-            }
-        })
-        .catch(err => {
-            console.log("User not authenticated:", err);
-            // Ensure login button is visible if unauthenticated
-            if (loginBtn) loginBtn.style.display = "inline-block";
-        });
-});
-</script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const navbarLinks = document.getElementById("navbar-links");
+        const loginBtn = document.getElementById("login-btn");
+    
+        fetch("/api/check-auth", { credentials: "include" })
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                }
+                throw new Error("Not authenticated");
+            })
+            .then(data => {
+                console.log("Auth success:", data);
+    
+                // Remove Login Button if authenticated
+                if (loginBtn) loginBtn.remove();
+    
+                // Show Dashboard link if role is valid
+                const validRoles = ["owner", "student", "driver", "pending"];
+                if (validRoles.includes(data.role)) {
+                    const dashboardLink = document.createElement("a");
+                    dashboardLink.href = `/${data.role}/dashboard`;
+                    dashboardLink.className = "nav-item nav-link";
+                    dashboardLink.id = "dashboard-link";
+                    dashboardLink.textContent = "Dashboard";
+    
+                    navbarLinks.appendChild(dashboardLink);
+                }
+    
+                // Add Logout Button
+                if (!document.getElementById("logout-btn")) {
+                    const logoutBtn = document.createElement("button");
+                    logoutBtn.id = "logout-btn";
+                    logoutBtn.className = "btn btn-danger py-2 px-4 ms-3";
+                    logoutBtn.textContent = "Logout";
+                    logoutBtn.addEventListener("click", function () {
+                        fetch("/api/logout", { method: "POST", credentials: "include" })
+                            .then(() => window.location.href = "/")
+                            .catch(err => console.error(err));
+                    });
+                    navbarLinks.appendChild(logoutBtn);
+                }
+            })
+            .catch(err => {
+                console.log("User not authenticated:", err);
+                if (loginBtn) loginBtn.style.display = "inline-block";
+            });
+    });
+    </script>
+    

@@ -1,9 +1,13 @@
 const express = require("express");
 const path = require("path");
 const cookieParser = require("cookie-parser");
+
 const busOwnerRoutes = require("./src/routes/busOwnerRoutes");
 const authRoutes = require("./src/routes/authRoutes");
+const dashboardRoutes = require("./src/routes/dashboardRoutes");
+const studentDashboardRoute = require("./src/routes/studentDashboardRoute");
 const authenticateUser = require("./src/middlewares/authMiddleware");
+
 require("dotenv").config();
 
 const app = express();
@@ -19,24 +23,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "frontend")));
 app.use(cookieParser());
 
-// Make user available to all EJS templates (if needed)
+// Make user available to all EJS templates
 app.use((req, res, next) => {
-  res.locals.user = null; // You can populate this from JWT if needed
+  res.locals.user = null;
   next();
 });
 
-// Home Route
-app.get("/", (req, res) => {
-  res.render("index");
-});
-
-// Auth routes (signup, login, logout, check-auth)
+// Routes
+app.get("/", (req, res) => res.render("index"));
 app.use("/api", authRoutes);
-
-// Protect owner dashboard routes
 app.use("/owner", authenticateUser, busOwnerRoutes);
+app.use("/student", studentDashboardRoute);
+app.use("/", dashboardRoutes); // role-based dashboards
 
-// Start server
+// ✅ Start server (standard Express way)
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Server is running on port ${PORT}`);
 });

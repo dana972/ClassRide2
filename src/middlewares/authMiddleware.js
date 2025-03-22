@@ -10,14 +10,8 @@ module.exports = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Check if the user is actually an 'owner' and not pending
-    if (decoded.role !== "owner") {
-      return res.json({ status: "pending", message: "Your role is still pending." });
-    }
-
-    req.user = decoded; // Attach the decoded user
-    next();
+    req.user = decoded; // ✅ Attach user info (id, role, etc.)
+    next(); // ✅ Let the route decide what to do with the role
   } catch (err) {
     res.status(403).json({ error: "Invalid token" });
   }

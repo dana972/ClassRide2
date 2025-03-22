@@ -81,18 +81,16 @@
         <div class="main-content">
           <div id="dashboard" class="content-section" style="display:none;">
 
-          <h1>Hello, <%= ownerName %>!</h1>
+            <h1>Hello, <%= studentName %>!</h1>
+
           
 <div class="top-boxes">
     <div class="small-box">
         <h3>Current Students</h3>
-        <p><%= studentsCount %></p>
+    
     </div>
     <div class="small-box">
-        <h3>Join Requests</h3>
-        <p><%= joinRequestsCount %></p>
-        <button class="view-button" id="viewRequestsButton">View Requests</button>
-
+       
     </div>
 </div>
 
@@ -103,14 +101,7 @@
       <h3>Buses</h3>
       <button class="add-button add-bus">Add More</button>
     </div>
-    <ul>
-      <% buses.forEach(function(bus) { %>
-          <li id="<%= bus.id %>">
-              <%= bus.bus_name %>
-              <button class="remove-button" onclick="removeBus('<%= bus.id %>')">Remove</button>
-          </li>
-      <% }) %>
-  </ul>
+   
   
      
   </div>
@@ -120,13 +111,7 @@
       <h3>Destinations</h3>
       <button class="add-button add-destination">Add More</button>
     </div>
-      <ul>
-          <% destinations.forEach(function(destination) { %>
-              <li><%= destination.name %>
-                <button class="remove-button" onclick="removeDestination('<%= destination.id %>')">Remove</button>
-              </li> <!-- Assuming a 'name' field in destinations -->
-          <% }) %>
-      </ul>
+   
       
   </div>
   
@@ -136,17 +121,7 @@
     
     <div class="dashboard-box">
       <h3>Drivers</h3>
-      <ul>
-          <% if (drivers && drivers.length > 0) { %>
-              <% drivers.forEach(driver => { %>
-                  <li><%= driver.full_name %> - <%= driver.location %>
-                    <button class="remove-driver-button" data-id="123">Delete</button>
-                  </li>
-              <% }) %>
-          <% } else { %>
-              <li>No drivers available.</li>
-          <% } %>
-      </ul>
+   
   </div>
   
 </div>
