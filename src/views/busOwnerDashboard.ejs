@@ -10,7 +10,26 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
 <link rel="stylesheet" href="/assets/css/sidebar.css" />
   <style>
-   
+   .full-width {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.dashboard-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.dashboard-box {
+  flex: 1 1 300px; /* default width */
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+
   </style>
   </head>
   <body>
@@ -103,14 +122,15 @@
       <h3>Buses</h3>
       <button class="add-button add-bus">Add More</button>
     </div>
-    <ul>
-      <% buses.forEach(function(bus) { %>
-          <li id="<%= bus.id %>">
-              <%= bus.bus_name %>
-              <button class="remove-button" onclick="removeBus('<%= bus.id %>')">Remove</button>
+      <ul>
+        <% buses.forEach(function(bus) { %>
+          <li id="<%= bus.bus_id %>">
+            <%= bus.bus_name %>
+            <button class="remove-button" onclick="removeBus('<%= bus.bus_id %>')">Remove</button>
           </li>
-      <% }) %>
-  </ul>
+        <% }) %>
+      </ul>
+      
   
      
   </div>
@@ -121,11 +141,13 @@
       <button class="add-button add-destination">Add More</button>
     </div>
       <ul>
-          <% destinations.forEach(function(destination) { %>
-              <li><%= destination.name %>
-                <button class="remove-button" onclick="removeDestination('<%= destination.id %>')">Remove</button>
-              </li> <!-- Assuming a 'name' field in destinations -->
-          <% }) %>
+        <% destinations.forEach(function(destination) { %>
+          <li id="destination-<%= destination.destination_id %>">
+            <%= destination.name %>
+            <button class="remove-button" onclick="removeDestination('<%= destination.destination_id %>')">Remove</button>
+          </li>
+        <% }) %>
+        
       </ul>
       
   </div>
@@ -137,25 +159,107 @@
     <div class="dashboard-box">
       <h3>Drivers</h3>
       <ul>
-          <% if (drivers && drivers.length > 0) { %>
-              <% drivers.forEach(driver => { %>
-                  <li><%= driver.full_name %> - <%= driver.location %>
-                    <button class="remove-driver-button" data-id="123">Delete</button>
-                  </li>
-              <% }) %>
-          <% } else { %>
-              <li>No drivers available.</li>
-          <% } %>
+        <% drivers.forEach(driver => { %>
+          <li id="driver-<%= driver.phone_number %>">
+            <%= driver.full_name %> - <%= driver.location %>
+            <button class="remove-button" onclick="removeDriver('<%= driver.phone_number %>')">Remove</button>
+          </li>
+        <% }) %>
+        
       </ul>
   </div>
+  <div class="dashboard-box full-width">
+    <div class="box-header">
+      <h3>Students</h3>
+    </div>
+  
+    <table class="students-table">
+      <thead>
+        <tr>
+          <th>Full Name</th>
+          <th>Phone Number</th>
+          <th>Location</th>
+          <th>Schedule</th>
+          <th>Attendance</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% students.forEach(student => { %>
+          <tr id="student-<%= student.phone_number %>">
+            <td><%= student.full_name %></td>
+            <td><%= student.phone_number %></td>
+            <td><%= student.location %></td>
+            <td><%= student.schedule %></td>
+            <td><%= student.attendance ? 'Present' : 'Absent' %></td>
+            <td>
+              <button class="remove-button" onclick="removeStudent('<%= student.phone_number %>')">Remove</button>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  
   
 </div>
+
           </div>
 
        
    
 
+          <script>
+            function removeStudent(phoneNumber) {
+  if (!phoneNumber) return;
 
+  const confirmDelete = confirm("Are you sure you want to remove this student?");
+  if (!confirmDelete) return;
+
+  fetch(`/owner/dashboard/student/${phoneNumber}`, {
+    method: 'DELETE'
+  })
+  .then(async res => {
+    if (!res.ok) throw new Error("Failed to delete student");
+    const data = await res.json();
+    if (data.message) {
+      document.getElementById(`student-${phoneNumber}`).remove();
+    }
+  })
+  .catch(err => console.error("Error deleting student:", err));
+}
+
+         function removeBus(busId) {
+  if (!busId) return;
+
+  const confirmDelete = confirm("Are you sure you want to remove this bus?");
+  if (!confirmDelete) return;
+
+  console.log("Attempting to remove bus with ID:", busId);
+  fetch(`/owner/dashboard/bus/${busId}`, {
+    method: 'DELETE'
+  })
+  .then(async (res) => {
+    const contentType = res.headers.get("content-type");
+    if (!res.ok) throw new Error("Server error " + res.status);
+    if (contentType && contentType.includes("application/json")) {
+      return res.json();
+    } else {
+      throw new Error("Unexpected response format");
+    }
+  })
+  .then(data => {
+    if (data.message) {
+      document.getElementById(busId).remove();
+    }
+  })
+  .catch(err => {
+    console.error("Error:", err);
+  });
+}
+
+          </script>
+          
 
 <%- include('./partials/requestModal') %>
 <%- include('./partials/addDestinationModal') %>
@@ -190,28 +294,46 @@
     });
   });
 </script>
+<script>
+ function removeDestination(destinationId) {
+  if (!destinationId) return;
 
-<script>// Function to send a DELETE request to remove a bus
-  function removeBus(busId) {
-    // Make an AJAX request to the server to remove the bus
-    fetch(`/remove-bus/${busId}`, {
-      method: 'DELETE',
-    })
-    .then((response) => {
-      if (response.ok) {
-        // Reload the page or update the DOM after successful deletion
-        alert('Bus removed successfully!');
-        location.reload(); // Reload the page to reflect the changes
-      } else {
-        alert('Failed to remove bus!');
-      }
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-      alert('An error occurred while removing the bus.');
-    });
-  }
-  </script>
+  const confirmDelete = confirm("Are you sure you want to remove this destination?");
+  if (!confirmDelete) return;
+
+  fetch(`/owner/dashboard/destination/${destinationId}`, {
+    method: 'DELETE'
+  })
+  .then(async res => {
+    if (!res.ok) throw new Error("Failed to delete destination");
+    const data = await res.json();
+    if (data.message) {
+      document.getElementById(`destination-${destinationId}`).remove();
+    }
+  })
+  .catch(err => console.error("Error deleting destination:", err));
+}
+function removeDriver(driverId) {
+  if (!driverId) return;
+
+  const confirmDelete = confirm("Are you sure you want to remove this driver?");
+  if (!confirmDelete) return;
+
+  fetch(`/owner/dashboard/driver/${driverId}`, {
+    method: 'DELETE'
+  })
+  .then(async res => {
+    if (!res.ok) throw new Error("Failed to delete driver");
+    const data = await res.json();
+    if (data.message) {
+      document.getElementById(`driver-${driverId}`).remove();
+    }
+  })
+  .catch(err => console.error("Error deleting driver:", err));
+}
+
+</script>
+
 
 <script src="/assets/js/sidebar.js"></script>
 

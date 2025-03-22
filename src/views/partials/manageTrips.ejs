@@ -1,32 +1,46 @@
-<div id="manage-trips" class="manage-trips-section">
-  <h3>Manage Trips for Tomorrow</h3>
+<div id="manage-trips" class="content-section" style="display: none;">
+    <h3>Manage Trips for Tomorrow</h3>
   <p>Here is where you manage your trips for tomorrow.</p>
+  <div id="manage-trips" class="content-section" style="display: none;">
+    <h3>Manage Trips for Tomorrow</h3>
+    <p>Here is where you manage your trips for tomorrow.</p>
   
-  <!-- Create Trip Button -->
-  <button id="openTripForm" class="manage-trips-btn">Create Trip</button>
+    <!-- Create Trip Button -->
+    <button id="openTripForm" class="manage-trips-btn">Create Trip</button>
   
-  <!-- Trip Form Modal -->
-  <div id="tripFormModal" class="manage-trips-modal" style="display: none;">
+    <!-- Trip Form Modal -->
+    <div id="tripFormModal" class="manage-trips-modal" style="display: none;">
       <div class="manage-trips-modal-content">
-          <span class="manage-trips-close" id="closeTripForm">&times;</span>
-          <h2>Create a New Trip</h2>
-          <form id="tripForm">
-              <label for="bus">Select Bus:</label>
-              <input type="text" id="bus" name="bus" required>
-              
-              <label for="driver">Assign Driver:</label>
-              <input type="text" id="driver" name="driver" required>
-              
-              <label for="destination">Destination:</label>
-              <input type="text" id="destination" name="destination" required>
-              
-              <label for="time">Departure Time:</label>
-              <input type="time" id="time" name="time" required>
-              
-              <button type="submit" class="manage-trips-btn">Submit</button>
-          </form>
+        <span class="manage-trips-close" id="closeTripForm">&times;</span>
+        <h2>Create a New Trip</h2>
+        <form id="tripForm">
+          <label for="bus">Select Bus:</label>
+          <select id="bus" name="bus_id" required>
+            <% buses.forEach(bus => { %>
+              <option value="<%= bus.bus_id %>"><%= bus.bus_name %></option>
+            <% }) %>
+          </select>
+  
+          <label for="driver">Assign Driver:</label>
+          <select id="driver" name="driver_phone" required>
+            <% drivers.forEach(driver => { %>
+              <option value="<%= driver.phone_number %>"><%= driver.full_name %></option>
+            <% }) %>
+          </select>
+  
+          <label for="destination">Destination:</label>
+          <select id="destination" name="destination_id" required>
+            <% destinations.forEach(destination => { %>
+              <option value="<%= destination.destination_id %>"><%= destination.name %></option>
+            <% }) %>
+          </select>
+  
+          
+  
+          <button type="submit" class="manage-trips-btn">Submit</button>
+        </form>
       </div>
-  </div>
+    </div>
   
   <!-- List of Students for Each Destination -->
   <h3>Students by Destination</h3>
@@ -154,3 +168,48 @@
       document.getElementById("tripFormModal").style.display = "none";
   });
 </script>
+<script>
+    // Open the modal
+    document.getElementById("openTripForm").addEventListener("click", function () {
+      document.getElementById("tripFormModal").style.display = "flex";
+    });
+  
+    // Close the modal
+    document.getElementById("closeTripForm").addEventListener("click", function () {
+      document.getElementById("tripFormModal").style.display = "none";
+    });
+  
+    // Handle form submission
+    document.getElementById("tripForm").addEventListener("submit", async function (event) {
+      event.preventDefault();
+  
+      const tripData = {
+        bus_id: document.getElementById("bus").value,
+        driver_phone: document.getElementById("driver").value,
+        destination_id: document.getElementById("destination").value,
+      };
+  
+      try {
+        const response = await fetch('/owner/dashboard/trip', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(tripData)
+        });
+  
+        const result = await response.json();
+  
+        if (response.ok) {
+          alert(result.message);
+          document.getElementById("tripFormModal").style.display = "none";
+          document.getElementById("tripForm").reset();
+        } else {
+          alert(result.error || "Failed to create trip");
+        }
+  
+      } catch (err) {
+        console.error("Trip creation error:", err);
+        alert("Error creating trip");
+      }
+    });
+  </script>
+  
