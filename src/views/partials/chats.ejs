@@ -1,5 +1,186 @@
-<div id="chats" class="content-section" style="display:none;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<style>.chat-container {
+  display: flex;
+  height: 500px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.chat-sidebar {
+  width: 30%;
+  border-right: 1px solid #ccc;
+  padding: 10px;
+  background: #f8f8f8;
+  overflow-y: auto;
+}
+
+.chat-list {
+  list-style: none;
+  padding: 0;
+}
+
+.chat-list li {
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.3s;
+}
+
+.chat-list li:hover {
+  background: #e2e2e2;
+}
+
+.chat-main {
+  width: 70%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+}
+
+.chat-header {
+  font-weight: bold;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 5px;
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.chat-message {
+  margin: 5px 0;
+}
+
+.chat-message.sent {
+  text-align: right;
+  color: #007bff;
+}
+
+.chat-message.received {
+  text-align: left;
+  color: #333;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: 10px;
+}
+
+#chatInput {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+#sendChatBtn {
+  padding: 8px 15px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+</style>
+<body>
+  <div id="chats" class="content-section" style="display: none;">
     <h3>Chats</h3>
-    <!-- Your content here -->
-  </div>
   
+    <div class="chat-container">
+      <!-- Left: Chat List -->
+      <div class="chat-sidebar">
+        <h4>Contacts</h4>
+        <ul id="chatList" class="chat-list">
+          <!-- Filled dynamically -->
+        </ul>
+      </div>
+  
+      <!-- Right: Active Chat -->
+      <div class="chat-main">
+        <div id="chatHeader" class="chat-header">Select a chat</div>
+        <div id="chatMessages" class="chat-messages">
+          <!-- Messages go here -->
+        </div>
+        <div class="chat-input-area">
+          <input type="text" id="chatInput" placeholder="Type a message..." />
+          <button id="sendChatBtn">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>let activeChatUser = null;
+
+    const dummyMessages = {
+      "1234567890": [
+        { from: "me", text: "Hey!" },
+        { from: "1234567890", text: "Hello!" },
+        { from: "me", text: "How are you?" },
+      ],
+      "9876543210": [
+        { from: "me", text: "Hi, driver!" },
+        { from: "9876543210", text: "On my way!" },
+      ],
+    };
+    
+    // Dummy chat users (replace with actual user list via fetch)
+    const chatUsers = [
+      { name: "Student One", phone: "1234567890" },
+      { name: "Driver Mike", phone: "9876543210" }
+    ];
+    
+    function loadChatList() {
+      const list = document.getElementById("chatList");
+      list.innerHTML = "";
+    
+      chatUsers.forEach(user => {
+        const li = document.createElement("li");
+        li.textContent = `${user.name} (${user.phone})`;
+        li.onclick = () => loadChat(user.phone, user.name);
+        list.appendChild(li);
+      });
+    }
+    
+    function loadChat(phone, name) {
+      activeChatUser = phone;
+      document.getElementById("chatHeader").textContent = `Chat with ${name}`;
+      const messages = dummyMessages[phone] || [];
+      const container = document.getElementById("chatMessages");
+      container.innerHTML = messages.map(m => `
+        <div class="chat-message ${m.from === "me" ? "sent" : "received"}">${m.text}</div>
+      `).join("");
+      container.scrollTop = container.scrollHeight;
+    }
+    
+    document.getElementById("sendChatBtn").addEventListener("click", () => {
+      const input = document.getElementById("chatInput");
+      const text = input.value.trim();
+      if (!text || !activeChatUser) return;
+    
+      // Append to dummy data
+      dummyMessages[activeChatUser] = dummyMessages[activeChatUser] || [];
+      dummyMessages[activeChatUser].push({ from: "me", text });
+    
+      input.value = "";
+      loadChat(activeChatUser, chatUsers.find(u => u.phone === activeChatUser).name);
+    });
+    
+    window.addEventListener("DOMContentLoaded", () => {
+      loadChatList();
+    });
+    </script>
+</body>
+</html>

@@ -53,6 +53,53 @@ const getDashboard = async (req, res) => {
     res.status(500).send("Error loading dashboard");
   }
 };
+// ✅ GET all buses for this owner
+const getAllBuses = async (req, res) => {
+  const ownerPhone = req.user.phone_number;
+  try {
+    const result = await client.query(
+      'SELECT * FROM buses WHERE owner_phone = $1',
+      [ownerPhone]
+    );
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Error fetching buses:", err);
+    res.status(500).json({ error: "Failed to fetch buses" });
+  }
+};
+
+// ✅ GET all drivers for this owner
+const getAllDrivers = async (req, res) => {
+  const ownerPhone = req.user.phone_number;
+  try {
+    const result = await client.query(
+      `SELECT drivers.phone_number, users.full_name
+       FROM drivers
+       JOIN users ON drivers.phone_number = users.phone_number
+       WHERE drivers.owner_phone = $1`,
+      [ownerPhone]
+    );
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Error fetching drivers:", err);
+    res.status(500).json({ error: "Failed to fetch drivers" });
+  }
+};
+
+// ✅ GET all destinations for this owner
+const getAllDestinations = async (req, res) => {
+  const ownerPhone = req.user.phone_number;
+  try {
+    const result = await client.query(
+      'SELECT * FROM destinations WHERE owner_phone = $1',
+      [ownerPhone]
+    );
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Error fetching destinations:", err);
+    res.status(500).json({ error: "Failed to fetch destinations" });
+  }
+};
 
 // Function to remove a bus
 const removeBus = async (req, res) => {
@@ -220,6 +267,7 @@ const getStudentsByDestination = async (req, res) => {
       JOIN users u ON s.phone_number = u.phone_number
       JOIN destinations d ON s.destination_id = d.destination_id
       WHERE s.owner_phone = $1
+      AND s.attendance = true
       AND NOT EXISTS (
         SELECT 1 FROM students_assignment sa
         WHERE sa.student_phone = s.phone_number
@@ -257,6 +305,7 @@ const getAllTrips = async (req, res) => {
 };
 
 // ✅ Get trip details by ID + list of assigned students
+// ✅ Get trip details by ID + list of assigned students
 const getTripDetails = async (req, res) => {
   const { id } = req.params;
 
@@ -264,8 +313,8 @@ const getTripDetails = async (req, res) => {
     // Fetch trip info with driver and destination details
     const tripResult = await client.query(`
       SELECT 
-        t.*,
-        d.name AS destination_name,
+        t.*, 
+        d.name AS destination_name, 
         u.full_name AS driver_name
       FROM trips t
       JOIN destinations d ON t.destination_id = d.destination_id
@@ -279,9 +328,9 @@ const getTripDetails = async (req, res) => {
 
     const trip = tripResult.rows[0];
 
-    // Fetch assigned students from students_assignment
+    // Fetch assigned students with full info
     const studentsResult = await client.query(`
-      SELECT u.full_name, s.phone_number
+      SELECT u.full_name, s.phone_number, s.location, s.schedule, s.attendance
       FROM students_assignment sa
       JOIN students s ON sa.student_phone = s.phone_number
       JOIN users u ON s.phone_number = u.phone_number
@@ -297,6 +346,34 @@ const getTripDetails = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch trip details" });
   }
 };
+
+const updateTrip = async (req, res) => {
+  const { id } = req.params;
+  const { bus_id, driver_phone, destination_id, pickup_time, dropoff_time, type } = req.body;
+
+  try {
+    await client.query(
+      `
+      UPDATE trips
+      SET 
+        bus_id = $1,
+        driver_phone = $2,
+        destination_id = $3,
+        pickup_time = $4,
+        dropoff_time = $5,
+        type = $6
+      WHERE trip_id = $7
+      `,
+      [bus_id, driver_phone, destination_id, pickup_time, dropoff_time, type, id]
+    );
+
+    res.status(200).json({ message: "Trip updated successfully" });
+  } catch (err) {
+    console.error("Error updating trip:", err);
+    res.status(500).json({ error: "Failed to update trip" });
+  }
+};
+
 
 const assignStudentToTrip = async (req, res) => {
   const { student_phone, trip_id } = req.body;
@@ -331,6 +408,9 @@ const unassignStudentFromTrip = async (req, res) => {
 
 module.exports = {
   getDashboard,
+  getAllBuses,
+  getAllDrivers,
+  getAllDestinations,
   removeBus,
   removeDestination,
   removeDriver,
@@ -342,6 +422,7 @@ module.exports = {
   getAllTrips,  
          // ✅ export added
   getTripDetails ,
+  updateTrip ,
   assignStudentToTrip  ,    // ✅ export added
   unassignStudentFromTrip
 };

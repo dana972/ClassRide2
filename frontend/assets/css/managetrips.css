@@ -1,0 +1,70 @@
+.manage-trips-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .manage-trips-modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .manage-trips-close {
+    float: right;
+    cursor: pointer;
+  }
+  .manage-trips-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+  }
+  .manage-trips-btn:hover {
+    background: #0056b3;
+  }
+  .manage-trips-destination-group {
+    margin-top: 20px;
+  }
+  .manage-trips-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  .manage-trips-table th, .manage-trips-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  .manage-trips-table th {
+    background-color: #f2f2f2;
+  }
+  .trip-card {
+    background-color: #e9f5ff;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 160px;
+    cursor: pointer;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    transition: background-color 0.2s;
+  }
+  .trip-card:hover {
+    background-color: #d0eaff;
+  }
+  #trip-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0 20px;
+  }
+  
