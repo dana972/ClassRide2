@@ -1,25 +1,41 @@
-const pool = require("../config/db");
+const client = require("../config/db");
 
-const getStudentDashboard = async (req, res) => {
+exports.getStudentDashboard = async (req, res) => {
   try {
-    const phoneNumber = req.user.phone_number;
+    const phone = req.user.phone_number;
 
-    // Get the student name from users table using phone_number
-    const { rows: userRows } = await pool.query(
-      "SELECT full_name FROM users WHERE phone_number = $1",
-      [phoneNumber]
+    // Fetch student details
+    const userResult = await client.query(
+      `SELECT * FROM users WHERE phone_number = $1`,
+      [phone]
     );
 
-    const studentName = userRows[0]?.full_name || "Student";
+    if (userResult.rows.length === 0) {
+      return res.status(404).send("Student not found");
+    }
 
+    const studentResult = await client.query(
+      `SELECT * FROM students WHERE phone_number = $1`,
+      [phone]
+    );
+
+    if (studentResult.rows.length === 0) {
+      return res.status(404).send("Student data not found");
+    }
+
+    const user = userResult.rows[0];
+    const student = studentResult.rows[0];
+
+    // Render student dashboard and pass full user info
     res.render("studentDashboard", {
-      studentName
+      studentName: user.full_name,
+      location: student.location,
+      schedule: student.schedule,
+      attendance: student.attendance,
+      user: req.user // ✅ So <%= user.role %> works in chats.ejs
     });
-
   } catch (err) {
-    console.error("❌ Error loading student dashboard:", err);
-    res.status(500).send("Something went wrong while loading the dashboard.");
+    console.error("Error loading student dashboard:", err);
+    res.status(500).send("Error loading dashboard");
   }
 };
-
-module.exports = { getStudentDashboard };

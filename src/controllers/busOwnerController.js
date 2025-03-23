@@ -42,12 +42,13 @@ const getDashboard = async (req, res) => {
       ownerName,
       buses: busesResult.rows,
       drivers: driversResult.rows,
-      students: studentsListResult.rows, // ✅ actual student records
+      students: studentsListResult.rows,
       studentsCount: studentsCountResult.rows[0].count,
       joinRequestsCount: joinRequestsResult.rows[0].count,
-      destinations: destinationsResult.rows
+      destinations: destinationsResult.rows,
+      user: req.user // ✅ This is the missing piece!
     });
-
+    
   } catch (err) {
     console.error("Error fetching dashboard data:", err);
     res.status(500).send("Error loading dashboard");

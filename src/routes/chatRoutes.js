@@ -1,12 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const authenticateUser = require("../middlewares/authMiddleware");
+const chatController = require("../controllers/chatController");
 
-// Protected chat page
-router.get("/chats", authenticateUser, (req, res) => {
-  res.render("chat", {
-    user: req.user, // Pass user info to EJS
-  });
-});
+// Routes
+router.get("/chats/:phone", authenticateUser, chatController.getChatMessages);
+router.get("/chats/history", authenticateUser, chatController.getChatHistory);
 
 module.exports = router;

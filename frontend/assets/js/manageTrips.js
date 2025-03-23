@@ -1,3 +1,4 @@
+
 document.getElementById("openTripForm").addEventListener("click", () => {
   toggleModal("tripFormModal", true);
 });
@@ -28,27 +29,37 @@ function showStudentInfo({ full_name, phone_number, location, schedule, attendan
         <span class="slider round"></span>
       </label>
     </p>
-<button class="manage-trips-btn" onclick="openChatWith('${full_name}', '${phone_number}')">Chat Now</button>
+<button class="manage-trips-btn" onclick="event.stopPropagation(); openChatWith('${full_name}', '${phone_number}')">Chat Now</button>
   `;
   toggleModal("studentInfoModal", true);
 }
 function openChatWith(full_name, phone_number) {
-  // Close student modal
+  // Close student info modal
   document.getElementById("studentInfoModal").style.display = "none";
 
-  // Activate "Chats" tab
-  const chatsTab = document.querySelector('[data-target="chats"]');
-  if (chatsTab) chatsTab.click();
+  // Show overlay
+  document.getElementById("chatOverlayModal").style.display = "block";
+  document.getElementById("chatOverlayHeader").textContent = `Chat with ${full_name}`;
+  document.getElementById("chatOverlayMessages").innerHTML = "";
+  document.getElementById("chatOverlayInput").value = "";
+  window.activeOverlayChatUser = phone_number;
 
-  // Wait a short moment for the chats section to show
-  setTimeout(() => {
-    // If chat list is already loaded
-    if (typeof loadChat === 'function') {
-      loadChat(phone_number, full_name);
-    } else {
-      console.warn('Chat loading function not found.');
-    }
-  }, 300);
+  // Load previous chat
+  fetch(`/chats/${phone_number}`)
+    .then(res => res.json())
+    .then(messages => {
+      const container = document.getElementById("chatOverlayMessages");
+      if (Array.isArray(messages)) {
+        messages.forEach(msg => {
+          const p = document.createElement("p");
+          p.className = msg.sender_phone === window.currentUser.phone_number ? "chat-message sent" : "chat-message received";
+          p.textContent = `${msg.sender_phone}: ${msg.message}`;
+          container.appendChild(p);
+        });
+        container.scrollTop = container.scrollHeight;
+      }
+    })
+    .catch(err => console.error("Error loading overlay chat:", err));
 }
 
 async function loadTrips() {
@@ -287,8 +298,39 @@ async function removeStudentFromTrip(trip_id, student_phone, buttonEl) {
     alert("Error removing student");
   }
 }
+document.getElementById("chatOverlaySendBtn").addEventListener("click", () => {
+  const input = document.getElementById("chatOverlayInput");
+  const message = input.value.trim();
+  const to = window.activeOverlayChatUser;
+  const from = window.currentUser.phone_number;
+
+  if (!message || !to || !from) return;
+
+  // Emit message
+  socket.emit("privateMessage", { from, to, message });
+
+  // Append locally
+  const container = document.getElementById("chatOverlayMessages");
+  const p = document.createElement("p");
+  p.className = "chat-message sent";
+  p.textContent = `You: ${message}`;
+  container.appendChild(p);
+  container.scrollTop = container.scrollHeight;
+
+  input.value = "";
+});
+
+document.getElementById("closeChatOverlay").addEventListener("click", () => {
+  document.getElementById("chatOverlayModal").style.display = "none";
+  window.activeOverlayChatUser = null;
+});
 
 window.addEventListener('DOMContentLoaded', () => {
   loadTrips();
   loadStudentLists();
 });
+window.currentUser = {
+  phone_number: "<%= user.phone_number %>",
+  role: "<%= user.role %>",
+  username: "<%= user.username %>"
+};
