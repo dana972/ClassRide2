@@ -85,52 +85,15 @@
       </form>
     </div>
   </div>
-<!-- ✅ Chat Overlay Modal -->
-<div id="chatOverlayModal" style="
-  display: none;
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 300px;
-  max-width: 90%;
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  z-index: 9999;
-  border: 1px solid #ccc;
-">
-  <div style="padding: 10px;">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h4 id="chatOverlayHeader" style="margin: 0;">Chat</h4>
-      <span id="closeChatOverlay" style="cursor: pointer; font-size: 20px;">&times;</span>
-    </div>
-    <div id="chatOverlayMessages" style="
-      max-height: 200px;
-      overflow-y: auto;
-      margin: 10px 0;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 14px;
-    "></div>
-    <input type="text" id="chatOverlayInput" placeholder="Type a message..." style="
-      width: 100%;
-      padding: 6px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    "/>
-    <button id="chatOverlaySendBtn" style="
-      margin-top: 6px;
-      width: 100%;
-      padding: 6px;
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    ">Send</button>
-  </div>
+<!-- Chat Overlay -->
+<div id="chatOverlayModal" style="display:none;">
+  <div id="chatOverlayHeader"></div>
+  <div id="chatOverlayMessages" class="chat-messages"></div>
+  <input id="chatOverlayInput" placeholder="Type message..." />
+  <button id="chatOverlaySendBtn">Send</button>
+  <button id="closeChatOverlay">Close</button>
 </div>
+
 
   <!-- ✅ Student Lists -->
   <h3>Students by Destination</h3>
@@ -147,7 +110,6 @@
     role: "<%= typeof user !== 'undefined' ? user.role : '' %>"
   };
 </script>
-<script src="/assets/js/chats.js"></script>
 
 </body>
 </html>
