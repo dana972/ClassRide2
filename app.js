@@ -12,7 +12,7 @@ const busOwnerRoutes = require("./src/routes/busOwnerRoutes");
 const authRoutes = require("./src/routes/authRoutes");
 const dashboardRoutes = require("./src/routes/dashboardRoutes");
 const studentDashboardRoute = require("./src/routes/studentDashboardRoute");
-const chatRoutes = require("./src/routes/chatRoutes");
+const chatRoutes = require("./src/routes/chatsRoutes");
 
 // App setup
 const app = express();
@@ -48,31 +48,63 @@ app.use("/student", authenticateUser, studentDashboardRoute);
 app.use("/", authenticateUser, dashboardRoutes);
 app.use("/", chatRoutes); // or use "/chats" if you want to prefix all chat routes
 
-// ✅ Socket.IO logic for private 1-on-1 chat
+// ✅ Socket.IO logic
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
 
+  // Existing private messaging logic:
   // Join user’s personal room using phone number
   socket.on("join", (phone) => {
     socket.join(phone);
     console.log(`📲 ${phone} joined their chat room`);
   });
 
-  // Handle private messages
+  // Handle private messages (1-on-1 based on phone numbers)
   socket.on("privateMessage", async ({ from, to, message }) => {
     console.log(`💬 ${from} ➡️ ${to}: ${message}`);
-
     try {
-      // Save message to database
+      // Save the private message to the database
       await db.query(
         `INSERT INTO messages (sender_phone, receiver_phone, message) VALUES ($1, $2, $3)`,
         [from, to, message]
       );
-
-      // Emit to receiver’s room
+      // Emit the message to the receiver’s personal room
       io.to(to).emit("privateMessage", { from, message });
     } catch (err) {
-      console.error("❌ Error saving message:", err);
+      console.error("❌ Error saving private message:", err);
+    }
+  });
+
+  // New conversation-based real-time chat events:
+  // Join a conversation room using the chat id
+  socket.on("joinConversation", (chatId) => {
+    socket.join(chatId);
+    console.log(`Socket ${socket.id} joined conversation room: ${chatId}`);
+  });
+
+  // Listen for new conversation messages
+  socket.on("sendMessage", async (data) => {
+    // data should include: { chatId, sender_phone, message_text }
+    console.log(`New message in chat ${data.chatId}:`, data.message_text);
+    try {
+      // Insert the new message into the messages table
+      const result = await db.query(
+        'INSERT INTO messages (chat_id, sender_phone, message_text, sent_at) VALUES ($1, $2, $3, NOW()) RETURNING *',
+        [data.chatId, data.sender_phone, data.message_text]
+      );
+      const message = result.rows[0];
+
+      // Get the sender's full name from the users table
+      const senderResult = await db.query(
+        'SELECT full_name FROM users WHERE phone_number = $1',
+        [data.sender_phone]
+      );
+      message.sender_name = senderResult.rows[0].full_name;
+
+      // Broadcast the new message to all clients in the conversation room
+      io.to(data.chatId).emit("newMessage", message);
+    } catch (err) {
+      console.error("Error sending conversation message:", err);
     }
   });
 

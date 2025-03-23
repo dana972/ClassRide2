@@ -37,18 +37,42 @@ const getDashboard = async (req, res) => {
     const joinRequestsResult = await client.query('SELECT COUNT(*) FROM students_join_requests WHERE owner_phone = $1', [ownerPhone]);
 
     const destinationsResult = await client.query('SELECT * FROM destinations WHERE owner_phone = $1', [ownerPhone]);
+// Fetch conversations for the chat interface.
+// This query gets each chat where the owner is a participant
+// and joins with the users table to retrieve the other participant's full name.
+const conversationsResult = await client.query(
+  `
+  SELECT 
+    c.chat_id, 
+    c.participant_1_phone, 
+    c.participant_2_phone,
+    u.full_name AS other_full_name
+  FROM chats c
+  JOIN users u 
+    ON u.phone_number = CASE 
+                          WHEN c.participant_1_phone = $1 THEN c.participant_2_phone 
+                          ELSE c.participant_1_phone 
+                        END
+  WHERE c.participant_1_phone = $1 OR c.participant_2_phone = $1
+  `,
+  [ownerPhone]
+);
+const conversations = conversationsResult.rows.map(row => ({
+  id: row.chat_id,
+  name: row.other_full_name
+}));res.render('busOwnerDashboard', {
+  ownerName,
+  buses: busesResult.rows,
+  drivers: driversResult.rows,
+  students: studentsListResult.rows,
+  studentsCount: studentsCountResult.rows[0].count,
+  joinRequestsCount: joinRequestsResult.rows[0].count,
+  destinations: destinationsResult.rows,
+  user: req.user, // already present for other uses
+  conversations, // added for chat functionality
+  currentUserPhone: ownerPhone // for chats.ejs to use
+});
 
-    res.render('busOwnerDashboard', {
-      ownerName,
-      buses: busesResult.rows,
-      drivers: driversResult.rows,
-      students: studentsListResult.rows,
-      studentsCount: studentsCountResult.rows[0].count,
-      joinRequestsCount: joinRequestsResult.rows[0].count,
-      destinations: destinationsResult.rows,
-      user: req.user // ✅ This is the missing piece!
-    });
-    
   } catch (err) {
     console.error("Error fetching dashboard data:", err);
     res.status(500).send("Error loading dashboard");

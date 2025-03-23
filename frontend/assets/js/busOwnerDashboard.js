@@ -1,24 +1,28 @@
 document.addEventListener("DOMContentLoaded", function () {
-    const navLinks = document.querySelectorAll(".nav-link");
-    const contentSections = document.querySelectorAll(".content-section");
-  
-    navLinks.forEach((link) => {
-      link.addEventListener("click", function (event) {
-        event.preventDefault();
-        const targetId = this.getAttribute("data-target");
-  
-        contentSections.forEach((section) => {
-          section.style.display = "none";
-        });
-  
-        const targetSection = document.getElementById(targetId);
-        if (targetSection) {
-          targetSection.style.display = "block";
-        }
+  const navLinks = document.querySelectorAll(".nav-link");
+  const contentSections = document.querySelectorAll(".content-section");
+
+  navLinks.forEach((link) => {
+    link.addEventListener("click", function (event) {
+      // If the link is meant to trigger the chat modal, let its own script handle it.
+      if (this.getAttribute("data-target") === "chats") {
+        return;
+      }
+      event.preventDefault();
+      const targetId = this.getAttribute("data-target");
+
+      contentSections.forEach((section) => {
+        section.style.display = "none";
       });
+
+      const targetSection = document.getElementById(targetId);
+      if (targetSection) {
+        targetSection.style.display = "block";
+      }
     });
   });
-  
+});
+
   function removeStudent(phoneNumber) {
     if (!phoneNumber || !confirm("Are you sure you want to remove this student?")) return;
   
