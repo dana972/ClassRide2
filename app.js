@@ -13,6 +13,8 @@ const authRoutes = require("./src/routes/authRoutes");
 const dashboardRoutes = require("./src/routes/dashboardRoutes");
 const studentDashboardRoute = require("./src/routes/studentDashboardRoute");
 const chatRoutes = require("./src/routes/chatsRoutes");
+const beOwnerRoutes = require("./src/routes/beOwnerRoutes");
+const chatbotRoutes = require('./src/routes/chatbotRoutes');
 
 // App setup
 const app = express();
@@ -47,6 +49,8 @@ app.use("/owner", authenticateUser, busOwnerRoutes);
 app.use("/student", authenticateUser, studentDashboardRoute);
 app.use("/", authenticateUser, dashboardRoutes);
 app.use("/", chatRoutes); // or use "/chats" if you want to prefix all chat routes
+app.use("/owner", authenticateUser, beOwnerRoutes);
+app.use('/chatbot', chatbotRoutes);
 
 // ✅ Socket.IO logic
 io.on("connection", (socket) => {

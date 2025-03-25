@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chatbot - Find Your Bus</title>
+  <link rel="stylesheet" href="/styles/chatbot.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      padding: 20px;
+    }
+    .chat-container {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    .chat-message {
+      margin-bottom: 15px;
+    }
+    .bot {
+      color: #333;
+    }
+    .user {
+      text-align: right;
+      color: #007bff;
+    }
+    .input-group {
+      margin-top: 20px;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .bus-option {
+      background-color: #e7f0fd;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
+    .bus-option button {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-message bot">
+      👋 Hi! I'm here to help you find a bus to your university. Can you tell me your home location and your university?
+    </div>
+
+    <form id="bus-search-form">
+      <div class="input-group">
+        <label for="home">🏠 Your Home Location</label>
+        <input type="text" id="home" name="home" placeholder="e.g. El Maadi" required>
+      </div>
+      <div class="input-group">
+        <label for="university">🎓 Your University</label>
+        <select id="university" name="university" required>
+          <option value="">-- Select University --</option>
+          <option value="ain_shams">Ain Shams University</option>
+          <option value="cairo_university">Cairo University</option>
+          <option value="guc">GUC</option>
+          <!-- Add more if needed -->
+        </select>
+      </div>
+      <div class="input-group">
+        <button type="submit">🔍 Find Buses</button>
+      </div>
+    </form>
+
+    <div id="results"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('bus-search-form');
+    const resultsDiv = document.getElementById('results');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const home = form.home.value;
+      const university = form.university.value;
+
+      const res = await fetch('/api/find-buses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ home, university })
+      });
+
+      const data = await res.json();
+      resultsDiv.innerHTML = '';
+
+      if (data.buses && data.buses.length > 0) {
+        data.buses.forEach(bus => {
+          const div = document.createElement('div');
+          div.className = 'bus-option';
+          div.innerHTML = `
+            <strong>🚌 Bus Owner:</strong> ${bus.ownerName}<br>
+            <strong>📍 Route:</strong> ${bus.route.join(' → ')}<br>
+            <button onclick="applyToBus('${bus.id}')">Apply to Join</button>
+          `;
+          resultsDiv.appendChild(div);
+        });
+      } else {
+        resultsDiv.innerHTML = '<p>No buses found near your location right now.</p>';
+      }
+    });
+
+    async function applyToBus(busId) {
+      const res = await fetch('/api/apply-to-bus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ busId })
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        alert('🎉 Your request has been sent!');
+      } else {
+        alert('⚠️ Failed to send request. Please try again.');
+      }
+    }
+  </script>
+</body>
+</html>
